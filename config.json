@@ -1,0 +1,23 @@
+{
+	"meta": {
+		"hwnum": 6,
+		"name": "Jonathan Shi",
+		"sid": 000000000,
+		"class": "A Class",
+		"sem": "Fall 2017",
+		"instr": ["Teacher McTeacherFace"],
+	},
+
+	"header": ["\\documentclass{article},"
+		"\\usepackage{amsmath,amssymb,amsthm,tikz,tkz-graph,color,chngpage,soul,hyperref,csquotes,graphicx,floatrow, yfonts}",
+		"\\newcommand*{\\QEDB}{\\hfill\\ensuremath{\\square}}\\newtheorem*{prop}{Proposition}",
+		"\\renewcommand{\\theenumi}{\\alph{enumi}}\\usepackage[shortlabels]{enumitem}",
+		"\\usepackage[nobreak=true]{mdframed}\\usetikzlibrary{matrix,calc, automata, positioning}",
+		"\\MakeOuterQuote{\"}\\usepackage[margin=1in]{geometry} \\newtheorem{theorem}{Theorem}",
+		"\\usepackage{tabto}",
+		"\\NumTabs{20}",
+		"\\usepackage{fancyhdr}",
+		"\\usepackage{pdfpages}",
+		"\\pagestyle{fancy}",
+		"\\hypersetup{colorlinks=true, urlcolor=blue}"]
+}
