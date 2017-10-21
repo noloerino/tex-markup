@@ -1,10 +1,19 @@
-package markup.parser
+package com.jhshi.markup
 
 import com.beust.klaxon.*
 import java.io.File
 
 const val ANSI_BOLD_YELLOW = "\u001B[1;33m"
+const val ANSI_BOLD_RED = "\u001B[1;31m"
 const val ANSI_RESET = "\u001B[0m"
+
+fun warn(msg: String) {
+	println(ANSI_BOLD_YELLOW + "WARN:" + ANSI_RESET + " $msg")
+}
+
+fun err(msg: String) {
+	println(ANSI_BOLD_RED + "ERROR:" + ANSI_RESET + " $msg")
+}
 
 fun parse(name: String) : Any? {
     val cls = Parser::class.java
@@ -13,7 +22,7 @@ fun parse(name: String) : Any? {
     }
 }
 
-fun getMeta(fileName: String, tokens: List<String>) : String {
+fun getMeta(fileName: String, tokens: MutableList<String>) : String {
 	val obj = Parser().parse(fileName)/*parse(fileName)*/ as? JsonObject ?: throw NullPointerException("Cannot find file $fileName")
 	val fields = mutableMapOf(
 		"hwnum" to "0",
@@ -39,13 +48,13 @@ fun getMeta(fileName: String, tokens: List<String>) : String {
 			fields[field] = meta[field].toString()
 		}
 		else {
-			println(ANSI_BOLD_YELLOW + "WARN: " + ANSI_RESET + "I don't know what to do with field \'$field\', value \'${fields[field]}\', so I'm ignoring it.")
+			warn("I don't know what to do with field \'$field\', value \'${fields[field]}\', so I'm ignoring it.")
 		}
 	}
 	// Gets meta information from split tokens
 	var i = 0
 	while (i < tokens.size && tokens[i] != "<head>") {
-		i++
+		
 	}
 
 

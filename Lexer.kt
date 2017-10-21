@@ -1,6 +1,5 @@
-package markup.parser
+package com.jhshi.markup
 
-import markup.tokens.*
 import java.io.File
 import java.io.BufferedReader
 
@@ -9,8 +8,6 @@ enum class TagEnvironment {
     TAG_NAME,
     // A token found within the body of a tag declaration, either a flag or a property
     TAG_DECL,
-    // A token (such as <item> or <node>) that signals the rest of the line should be included in this token
-    LINE_TAG,
     // A token found within the body of a tag, to be interpreted literally by the LaTeX compiler
     LITERAL,
     // A comment. Should be dropped after the tokenization process.
@@ -23,7 +20,7 @@ private fun parseLineJoins(words: List<String>): List<String> {
     var i = 0
     while (i < words.size) {
         var word = words[i]
-        if (word.trim().endsWith("\\")) {
+        if (word.trim().endsWith("\\") && !word.trim().endsWith("\\\\")) {
             try {
                 newWords.add(word + words[i + 1])
             }
@@ -40,7 +37,7 @@ private fun parseLineJoins(words: List<String>): List<String> {
     return newWords
 }
 
-private fun getWords(file: File): List<String> {
+fun getWords(file: File): List<String> {
     val br = file.bufferedReader()
     var text = parseLineJoins(br.readLines())
     val TAG_OPEN = '<'
@@ -59,9 +56,6 @@ private fun getWords(file: File): List<String> {
         var line = rawLine.trim()
         reader@ for (c in line) {
             when (currEnv) {
-                TagEnvironment.LINE_TAG -> {
-                    token.append(c)
-                }
                 TagEnvironment.COMMENT -> {
                     token.append(c)
                     if (c == TAG_CLOSE && token.endsWith("--" + TAG_CLOSE)) {
@@ -83,13 +77,8 @@ private fun getWords(file: File): List<String> {
                             currEnv = TagEnvironment.TAG_DECL
                         }
                         TAG_CLOSE -> {
-                            if (tagName.toString().substring(1, tagName.length - 1) in lineTags) {
-                                currEnv = TagEnvironment.LINE_TAG
-                            }
-                            else {
-                                currEnv = TagEnvironment.LITERAL
-                                addToken()
-                            }
+                            currEnv = TagEnvironment.LITERAL
+                            addToken()
                             tagName = StringBuilder()
                         }
                         TAG_OPEN -> {
@@ -110,10 +99,6 @@ private fun getWords(file: File): List<String> {
                 }
             } 
         }
-        if (currEnv == TagEnvironment.LINE_TAG) {
-            currEnv = TagEnvironment.LITERAL
-            tagName = StringBuilder()
-        }
         if (currEnv == TagEnvironment.LITERAL && !token.isBlank()) {
             token.append("\n")
         }
@@ -122,8 +107,77 @@ private fun getWords(file: File): List<String> {
     return tokens
 }
 
-fun wordsToTokens(file: File): List<Token> {
-	val TOKEN_EXPR = Regex("<*>")
+val TOKEN_OPEN = Regex("(?<=<)[^/]\\w*(?=\\s?.*?>)")
+val TOKEN_FLAG = Regex("(?<= )(?<!=)\\w*(?=[ >])") // note: does not check that the string is within an html tag
+val TOKEN_PROPERTY = Regex("(?<= )\\w*=\\S*(?=[ >])") // see above
+val TOKEN_CLOSE = Regex("(?<=</)\\w*(?=\\s?.*?>)")
 
-	return listOf()
+fun wordsToTokens(file: File): MutableList<Token> {
+	val tokens: MutableList<Token> = mutableListOf()
+	val words = getWords(file)
+	// create tokens from words
+	// keeps track of what token requires closing, with most recent on the end
+	val openTokenStack: MutableList<String> = mutableListOf()
+	val emptyCreator = {-> UnknownTag.create("empty", arrayOf(), hashMapOf())}
+	var creator = emptyCreator
+	var i = 0
+	while (i < words.size) {
+		var word = words[i]
+		if (TOKEN_OPEN.containsMatchIn(word)) {
+			val tokenName: String = TOKEN_OPEN.find(word)!!.value
+			val flags: Array<String> = TOKEN_FLAG.findAll(word).map { it.value }.toList().toTypedArray()
+			val properties: HashMap<String, String> = getProperties(word)
+			creator = when (tokenName) {
+				in emptyTags -> {-> EmptyTag.create(tokenName, flags, properties)}
+				in lineTags -> {-> LineTag.create(tokenName, flags, properties)}
+				in unclosedTags -> {-> unclosedTags[tokenName]!!(flags, properties)}
+				in aliasTags -> {-> aliasTags[tokenName]!!(flags, properties)}
+				in definedTags -> {-> definedTags[tokenName]!!(flags, properties)}
+				else -> {-> UnknownTag.create(tokenName, flags, properties)}
+			}
+			if (tokenName !in unclosedTags) {
+				openTokenStack.add(tokenName)
+			}
+			tokens.add(creator())
+		}
+		else if (TOKEN_CLOSE.containsMatchIn(word)) {
+			val tokenName = TOKEN_CLOSE.find(word)!!.value
+			/*if (tokenName != openTokenStack.last()) { // token closed improperly
+				throw IllegalArgumentException("Attempted to close ${openTokenStack.last()} with $tokenName on word #$i")
+			}*/
+			openTokenStack.removeAt(openTokenStack.size - 1)
+			tokens.add(ClosingTag(tokenName))
+			creator = emptyCreator
+		}
+		else {
+			var literal: MutableList<String> = mutableListOf()
+			while (i < words.size && !TOKEN_OPEN.containsMatchIn(words[i]) && !TOKEN_CLOSE.containsMatchIn(words[i])) {
+				literal.add(words[i])
+				i++
+			}
+			i--
+			tokens.add(Literal(literal))
+		}
+		i++
+	}
+	if (openTokenStack.size != 0) {
+		//throw IllegalArgumentException("Unclosed token(s) ${openTokenStack.toString()}")
+	}
+	return tokens
+}
+
+fun getProperties(word: String): HashMap<String, String> {
+	val props = TOKEN_PROPERTY.findAll(word)
+	val map: MutableMap<String, String> = mutableMapOf()
+	for (item in props) {
+		val split = item.value.split("=", limit=2)
+		if (split[1].length >= 2
+				&& (split[1].startsWith('\'') || split[1].startsWith('\"')) && (split[1].endsWith('\'') || split[1].endsWith('\"'))) {
+			map.put(split[0], split[1].substring(1, split[1].length - 1))
+		}
+		else {
+			map.put(split[0], split[1])
+		}
+	}
+	return HashMap(map.toMap())
 }

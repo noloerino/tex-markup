@@ -1,55 +1,100 @@
-package markup.tokens
+package com.jhshi.markup
 
-abstract class AliasTag(id: String, content: Array<Token>, flags: Array<String>, properties: Array<String>) : Tag(id, content, flags, properties) {
-    constructor(id: String, content: Array<Token>) : this(id, content, arrayOf(), arrayOf()) { }
+val aliasTags = hashMapOf("math" to Math.Companion::create,
+						  "ilmath" to InlineMath.Companion::create, 
+						  "i" to Italic.Companion::create,
+						  "b" to Bold.Companion::create)
+
+abstract class AliasTag(id: String, flags: Array<String>, properties: HashMap<String, String>) : Tag(id, flags, properties) {
+    constructor(id: String) : this(id, arrayOf(), hashMapOf()) { }
     abstract val texId: String
 
-    override fun eval(currEnv: ParseEnv): String {
+    override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
         var sb = StringBuilder("\\begin{$texId}\n\t")
-        sb.append(super.eval(currEnv))
+        while (tokens.size != 0) {
+            sb.append(tokens[0].eval(tokens, currEnv))
+        }
         sb.append("\\end{$texId}\n\t")
         return sb.toString()
     }
 }
 
-class Math(content: Array<Token>) : AliasTag("math", content) {
+class Math() : AliasTag("math") {
 	override val texId = "align*"
 	
-	override fun eval(currEnv: ParseEnv): String {
-		return super.eval(ParseEnv.MATH_LITERAL)
+	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
+		val sb = StringBuilder("\\begin{$texId}")
+		while (tokens.size != 0) {
+            sb.append(tokens[0].eval(tokens, ParseEnv.MATH_LITERAL))
+        }
+        sb.append("\\end{$texId}")
+		return sb.toString()
 	}
+
+	companion object {
+        fun create(flags: Array<String>, properties: HashMap<String, String>): Tag {
+            return Math()
+        }
+    }
 }
 
-class InlineMath(content: Array<Token>) : AliasTag("ilmath", content) {
+class InlineMath() : AliasTag("ilmath") {
 	override val texId = "$"
 
-	override fun eval(currEnv: ParseEnv): String {
+	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
 		var sb = StringBuilder(texId)
-		for (token in content) {
-            sb.append(token.eval(ParseEnv.MATH_LITERAL))
+		while (tokens.size != 0) {
+            sb.append(tokens[0].eval(tokens, ParseEnv.MATH_LITERAL))
         }
 		sb.append(texId)
 		return sb.toString()
 	}
+
+	companion object {
+        fun create(flags: Array<String>, properties: HashMap<String, String>): Tag {
+            return InlineMath()
+        }
+    }
 }
 
-class Italic(content: Array<Token>) : AliasTag("i", content) {
+class Italic() : AliasTag("i") {
 	override val texId = "textit"
+
+	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
+		var sb = StringBuilder("\\$texId{")
+		while (tokens.size != 0) {
+            sb.append(tokens[0].eval(tokens, currEnv))
+        }
+		sb.append("}")
+		return sb.toString()
+	}
+
+	companion object {
+        fun create(flags: Array<String>, properties: HashMap<String, String>): Tag {
+            return Italic()
+        }
+    }
 }
 
-class Bold(content: Array<Token>) : AliasTag("b", content) {
+class Bold() : AliasTag("b") {
 	override val texId = "textbf"
 
-	override fun eval(currEnv: ParseEnv): String {
+	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
 		val _texId = when (currEnv) {
 			ParseEnv.MATH_LITERAL -> "mathbf"
 			else -> "textbf"
 		}
-		var sb  = StringBuilder("\\begin{$_texId}")
-		for (token in content) {
-			sb.append(token.eval(currEnv))
-		}
-		sb.append("\\end{$_texId")
+		var sb  = StringBuilder("\\$_texId{")
+		while (tokens.size != 0) {
+            sb.append(tokens[0].eval(tokens, currEnv))
+        }
+		sb.append("}")
 		return sb.toString()
 	}
+
+	companion object {
+        fun create(flags: Array<String>, properties: HashMap<String, String>): Tag {
+            return Bold()
+        }
+    }
 }
