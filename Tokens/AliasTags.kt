@@ -1,9 +1,12 @@
 package com.jhshi.markup
 
 val aliasTags = hashMapOf("math" to Math.Companion::create,
-						  "ilmath" to InlineMath.Companion::create, 
+						  "ilmath" to InlineMath.Companion::create,
+						  "part" to ProbPart.Companion::create,
 						  "i" to Italic.Companion::create,
-						  "b" to Bold.Companion::create)
+						  "b" to Bold.Companion::create,
+						  "body" to DocumentT.Companion::create,
+						  "box" to MDFramed.Companion::create)
 
 abstract class AliasTag(id: String, flags: Array<String>, properties: HashMap<String, String>) : Tag(id, flags, properties) {
     constructor(id: String) : this(id, arrayOf(), hashMapOf()) { }
@@ -11,9 +14,7 @@ abstract class AliasTag(id: String, flags: Array<String>, properties: HashMap<St
 
     override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
         var sb = StringBuilder("\\begin{$texId}\n\t")
-        while (tokens.size != 0) {
-            sb.append(tokens[0].eval(tokens, currEnv))
-        }
+        evalChildren(sb, tokens, currEnv)
         sb.append("\\end{$texId}\n\t")
         return sb.toString()
     }
@@ -24,9 +25,7 @@ class Math() : AliasTag("math") {
 	
 	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
 		val sb = StringBuilder("\\begin{$texId}")
-		while (tokens.size != 0) {
-            sb.append(tokens[0].eval(tokens, ParseEnv.MATH_LITERAL))
-        }
+        evalChildren(sb, tokens, ParseEnv.MATH_LITERAL)
         sb.append("\\end{$texId}")
 		return sb.toString()
 	}
@@ -43,9 +42,7 @@ class InlineMath() : AliasTag("ilmath") {
 
 	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
 		var sb = StringBuilder(texId)
-		while (tokens.size != 0) {
-            sb.append(tokens[0].eval(tokens, ParseEnv.MATH_LITERAL))
-        }
+        evalChildren(sb, tokens, ParseEnv.MATH_LITERAL)
 		sb.append(texId)
 		return sb.toString()
 	}
@@ -57,14 +54,37 @@ class InlineMath() : AliasTag("ilmath") {
     }
 }
 
+class ProbPart(flags: Array<String>, properties: HashMap<String, String>) : AliasTag("part", flags, properties) {
+	override val texId = "item"
+
+	override val validFlags = arrayOf("nopbr")
+	override val validProperties = arrayOf("name")
+
+	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
+		var sb = StringBuilder("\\$texId ")
+		sb.append(if ("name" in properties) Literal(listOf(properties["name"]!!)).eval(mutableListOf(), currEnv) else "\\\\")
+		sb.append("\\begin{mdframed}\\textbf{Solution}\\\\")
+		evalChildren(sb, tokens, currEnv)
+		sb.append("\\end{mdframed}")
+		if ("nopbr" !in validFlags) {
+			sb.append("\\clearpage")
+		}
+		return sb.toString()
+	}
+
+	companion object {
+		fun create(flags: Array<String>, properties: HashMap<String, String>): Tag {
+			return ProbPart(flags, properties)
+		}
+	}
+}
+
 class Italic() : AliasTag("i") {
 	override val texId = "textit"
 
 	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
 		var sb = StringBuilder("\\$texId{")
-		while (tokens.size != 0) {
-            sb.append(tokens[0].eval(tokens, currEnv))
-        }
+		evalChildren(sb, tokens, currEnv)
 		sb.append("}")
 		return sb.toString()
 	}
@@ -85,9 +105,7 @@ class Bold() : AliasTag("b") {
 			else -> "textbf"
 		}
 		var sb  = StringBuilder("\\$_texId{")
-		while (tokens.size != 0) {
-            sb.append(tokens[0].eval(tokens, currEnv))
-        }
+		evalChildren(sb, tokens, currEnv)
 		sb.append("}")
 		return sb.toString()
 	}
@@ -97,4 +115,24 @@ class Bold() : AliasTag("b") {
             return Bold()
         }
     }
+}
+
+class DocumentT() : AliasTag("body") {
+	override val texId = "document"
+
+	companion object {
+		fun create(flags: Array<String>, properties: HashMap<String, String>): Tag {
+            return DocumentT()
+        }
+	}
+}
+
+class MDFramed() : AliasTag("box") {
+	override val texId = "mdframed"
+
+	companion object {
+		fun create(flags: Array<String>, properties: HashMap<String, String>): Tag {
+            return MDFramed()
+        }
+	}
 }

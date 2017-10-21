@@ -8,7 +8,7 @@
 		"instr": ["Teacher McTeacherFace"],
 	},
 
-	"header": ["\\documentclass{article},"
+	"header": ["\\documentclass{article}",
 		"\\usepackage{amsmath,amssymb,amsthm,tikz,tkz-graph,color,chngpage,soul,hyperref,csquotes,graphicx,floatrow, yfonts}",
 		"\\newcommand*{\\QEDB}{\\hfill\\ensuremath{\\square}}\\newtheorem*{prop}{Proposition}",
 		"\\renewcommand{\\theenumi}{\\alph{enumi}}\\usepackage[shortlabels]{enumitem}",
@@ -19,5 +19,7 @@
 		"\\usepackage{fancyhdr}",
 		"\\usepackage{pdfpages}",
 		"\\pagestyle{fancy}",
-		"\\hypersetup{colorlinks=true, urlcolor=blue}"]
+		"\\hypersetup{colorlinks=true, urlcolor=blue}",
+		"\\headheight=40pt",
+		"\\renewcommand{\\headrulewidth}{6pt}"]
 }

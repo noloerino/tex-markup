@@ -1,10 +1,52 @@
 package com.jhshi.markup
 
-val definedTags = hashMapOf("matrix" to MatrixT.Companion::create)
+val definedTags = hashMapOf("matrix" to MatrixT.Companion::create,
+							"prob" to Problem.Companion::create)
+
+class Problem(flags: Array<String>, properties: HashMap<String, String>) : Tag("prob", flags, properties) {
+	override val validFlags = arrayOf("nobox")
+	override val validProperties = arrayOf("name")
+
+	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
+		val pnum: Int
+		if (flags.size != 0) {
+			val flagNum: Int? = flags.filter { it.matches(Regex("(0|[1-9][0-9]*)")) }.map { it.toInt() }.max()
+			pnum = if (flagNum == null) Problem.problems else flagNum
+		}
+		else {
+			pnum = Problem.problems
+		}
+		Problem.problems++
+		val name = if ("name" in properties) properties["name"] else ""
+		val sb = StringBuilder("\\subsection*{$pnum. $name}")
+		val multipart = tokens.any { e -> e is ProbPart }
+		if (!multipart) {
+			if ("nobox" !in flags) {
+				sb.append("\\begin{mdframed}\\textbf{Solution}\\\\")
+			}
+			evalChildren(sb, tokens, currEnv)
+			if ("nobox" !in flags) {
+				sb.append("\\end{mdframed}\\clearpage")
+			}
+		}
+		else {
+			sb.append("\\begin{enumerate}")
+			evalChildren(sb, tokens, currEnv)
+			sb.append("\\end{enumerate}\\clearpage")
+		}
+		return sb.toString()
+	}
+
+	companion object {
+		var problems = 1
+		fun create(flags: Array<String>, properties: HashMap<String, String>): Tag {
+			return Problem(flags, properties)
+		}
+	}
+}
 
 class MatrixT(flags: Array<String>, properties: HashMap<String, String>) : Tag("matrix", flags, properties) {
-
-	override val validFlags = arrayOf("T")
+	override val validFlags = arrayOf("T") // TODO
 	override val validProperties = arrayOf("augment", "brackets")
 
 	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
@@ -52,9 +94,7 @@ class MatrixT(flags: Array<String>, properties: HashMap<String, String>) : Tag("
 				c.content = c.content.map { it.replace(',', '`') }
 			}
 		}
-		while (tokens.size != 0) {
-            sb.append(tokens[0].eval(tokens, currEnv))
-        }
+		evalChildren(sb, tokens, currEnv)
 		sb.append(endTag)
 		return sb.toString()
 	}

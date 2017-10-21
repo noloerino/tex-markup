@@ -19,6 +19,8 @@ fun main(args: Array<String>) {
     for (token in tokens) {
         tagmd.append(token.toString())
     }
+    initConfig("./config.json")
+    outs.append(buildHeader())
     while (tokens.size != 0) {
     	val token = tokens[0]
     	outs.append(token.eval(tokens, ParseEnv.LITERAL))
@@ -26,8 +28,5 @@ fun main(args: Array<String>) {
     File("tagmd.txt").bufferedWriter().use {
         o -> o.write(tagmd.toString())
     }
-    File("out.txt").bufferedWriter().use {
-    	o -> o.write(outs.toString())
-    }
-    // var fields = getMeta("./config.json", getWords(File("example.xml")))
+    File("out.tex").writeText(outs.toString(), Charsets.US_ASCII) // needs to be utf-8 encoded
 }

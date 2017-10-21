@@ -107,9 +107,15 @@ fun getWords(file: File): List<String> {
     return tokens
 }
 
+// TODO
+fun checkIdentifierConflicts() {
+// use a set
+}
+
 val TOKEN_OPEN = Regex("(?<=<)[^/]\\w*(?=\\s?.*?>)")
 val TOKEN_FLAG = Regex("(?<= )(?<!=)\\w*(?=[ >])") // note: does not check that the string is within an html tag
-val TOKEN_PROPERTY = Regex("(?<= )\\w*=\\S*(?=[ >])") // see above
+val TOKEN_PROPERTY_STR = Regex("(?<= )\\w+=[\"\'][^\"\']*[\"\'](?=)") // see above
+val TOKEN_PROPERTY = Regex("(?<= )\\w*=[^\"]\\S*(?=[ >])")
 val TOKEN_CLOSE = Regex("(?<=</)\\w*(?=\\s?.*?>)")
 
 fun wordsToTokens(file: File): MutableList<Token> {
@@ -128,6 +134,7 @@ fun wordsToTokens(file: File): MutableList<Token> {
 			val flags: Array<String> = TOKEN_FLAG.findAll(word).map { it.value }.toList().toTypedArray()
 			val properties: HashMap<String, String> = getProperties(word)
 			creator = when (tokenName) {
+				in headerTags -> {-> HeaderTag.create(tokenName)}
 				in emptyTags -> {-> EmptyTag.create(tokenName, flags, properties)}
 				in lineTags -> {-> LineTag.create(tokenName, flags, properties)}
 				in unclosedTags -> {-> unclosedTags[tokenName]!!(flags, properties)}
@@ -168,8 +175,9 @@ fun wordsToTokens(file: File): MutableList<Token> {
 
 fun getProperties(word: String): HashMap<String, String> {
 	val props = TOKEN_PROPERTY.findAll(word)
+	val propsStr = TOKEN_PROPERTY_STR.findAll(word)
 	val map: MutableMap<String, String> = mutableMapOf()
-	for (item in props) {
+	fun add(item: MatchResult) {
 		val split = item.value.split("=", limit=2)
 		if (split[1].length >= 2
 				&& (split[1].startsWith('\'') || split[1].startsWith('\"')) && (split[1].endsWith('\'') || split[1].endsWith('\"'))) {
@@ -177,7 +185,13 @@ fun getProperties(word: String): HashMap<String, String> {
 		}
 		else {
 			map.put(split[0], split[1])
-		}
+		} //" this is to fix syntax highlighting
+	}
+	for (item in props) {
+		add(item)
+	}
+	for (item in propsStr) {
+		add(item)
 	}
 	return HashMap(map.toMap())
 }

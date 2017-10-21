@@ -17,6 +17,12 @@ abstract class Token {
     }
 }
 
+fun evalChildren(sb: StringBuilder, children: MutableList<Token>, currEnv: ParseEnv) {
+    while (children.size != 0) {
+        sb.append(children[0].eval(children, currEnv))
+    }
+}
+
 // Characters that are directly replaced
 val csubstitutions: HashMap<Char, String> = hashMapOf('`' to "&", '\n' to "\\\\", '~' to "\\sim")
 
@@ -25,8 +31,7 @@ val csubstitutions: HashMap<Char, String> = hashMapOf('`' to "&", '\n' to "\\\\"
 
 class Literal(var content: List<String>) : Token() {
     override fun eval(tokens: MutableList<Token>, currEnv: ParseEnv): String {
-        assert (tokens[0] === this)
-        println("EVALUATING LITERAL ${content.toString()}")
+        assert (tokens.size == 0 || tokens[0] === this)
         var sb = StringBuilder()
         for (token in content) {
             for (c in token) {
@@ -38,7 +43,9 @@ class Literal(var content: List<String>) : Token() {
                 }
             }
         }
-        tokens.removeAt(0)
+        if (tokens.size != 0) {
+            tokens.removeAt(0)
+        }
         return sb.toString()
     }
 
@@ -71,7 +78,7 @@ abstract class Tag(val id: String, var flags: Array<String>, var properties: Has
     }
 
     // SHOULD ALWAYS BE CALLED WITH THIS ELEMENT'S OPEN TAG AS THE FIRST ELEMENT
-    open override fun eval(tokens: MutableList<Token>, currEnv: ParseEnv): String {
+    override fun eval(tokens: MutableList<Token>, currEnv: ParseEnv): String {
         if (tokens.size == 0) {
             return ""
         }
@@ -104,9 +111,7 @@ abstract class Tag(val id: String, var flags: Array<String>, var properties: Has
 
     open fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
         var sb: StringBuilder = StringBuilder()
-        while (tokens.size != 0) {
-            sb.append(tokens[0].eval(tokens, currEnv))
-        }
+        evalChildren(sb, tokens, currEnv)
         return sb.toString()
     }
 
@@ -116,7 +121,7 @@ abstract class Tag(val id: String, var flags: Array<String>, var properties: Has
 }
 
 class ClosingTag(id: String) : Tag(id) {
-    open override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
+    override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
         return ""
     }
 
@@ -129,11 +134,13 @@ class ClosingTag(id: String) : Tag(id) {
 open class UnknownTag(id: String) : Tag(id) {
     open override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
         var sb: StringBuilder = StringBuilder("\\begin{$id}\n")
-        while (tokens.size != 0) {
-            sb.append(tokens[0].eval(tokens, currEnv))
-        }
+        evalChildren(sb, tokens, currEnv)
         sb.append("\n\\end{$id}\n")
         return sb.toString()
+    }
+
+    override fun toString(): String {
+        return super.toString() + ":UNKNOWN:"
     }
 
     companion object {
@@ -151,9 +158,7 @@ val lineTags: List<String> = listOf("item", "node")
 class LineTag(id: String) : UnknownTag(id) {
     override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
         var sb: StringBuilder = StringBuilder("\\$id ")
-        while (tokens.size != 0) {
-            sb.append(tokens[0].eval(tokens, currEnv))
-        }
+        evalChildren(sb, tokens, currEnv)
         return sb.toString()
     }
 

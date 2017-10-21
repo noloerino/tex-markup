@@ -79,7 +79,7 @@ class Image(flags: Array<String>, properties: HashMap<String, String>) : Unclose
 	override val validProperties = arrayOf("scale", "src")
 
 	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
-		var sb = StringBuilder("\\includegraphics[scale=0.7]{3b.png}")
+		var sb = StringBuilder("\\includegraphics")
 		if ("scale" in properties.keys) {
 			sb.append("[scale=${properties["scale"]}]")
 		}
