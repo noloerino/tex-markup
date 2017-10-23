@@ -1,4 +1,4 @@
-package com.jhshi.markup
+package texmarkup
 
 val emptyTags = listOf("texml")
 

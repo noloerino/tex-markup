@@ -1,4 +1,4 @@
-package com.jhshi.markup
+package texmarkup
 import java.util.Arrays
 
 val unclosedTags = hashMapOf("!DOCTYPE" to DocType.Companion::create,
@@ -79,9 +79,12 @@ class Image(flags: Array<String>, properties: HashMap<String, String>) : Unclose
 	override val validProperties = arrayOf("scale", "src")
 
 	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
-		var sb = StringBuilder("\\includegraphics")
+		var sb = StringBuilder("\\begin{center}\\includegraphics")
 		if ("scale" in properties.keys) {
 			sb.append("[scale=${properties["scale"]}]")
+		}
+		else {
+			sb.append("[scale=0.5]")
 		}
 		if ("src" in properties.keys) {
 			sb.append("{${properties["src"]}}")
@@ -89,6 +92,7 @@ class Image(flags: Array<String>, properties: HashMap<String, String>) : Unclose
 		else {
 			sb.append("{}")
 		}
+		sb.append("\\end{center}")
 		return sb.toString()
 	}
 

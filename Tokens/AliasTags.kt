@@ -1,4 +1,4 @@
-package com.jhshi.markup
+package texmarkup
 
 val aliasTags = hashMapOf("math" to Math.Companion::create,
 						  "ilmath" to InlineMath.Companion::create,
@@ -26,6 +26,9 @@ class Math() : AliasTag("math") {
 	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
 		val sb = StringBuilder("\\begin{$texId}")
         evalChildren(sb, tokens, ParseEnv.MATH_LITERAL)
+        if (sb.toString().endsWith("\\\\ ")) {
+        	sb.delete(sb.length - 3, sb.length)
+        }
         sb.append("\\end{$texId}")
 		return sb.toString()
 	}
@@ -57,16 +60,20 @@ class InlineMath() : AliasTag("ilmath") {
 class ProbPart(flags: Array<String>, properties: HashMap<String, String>) : AliasTag("part", flags, properties) {
 	override val texId = "item"
 
-	override val validFlags = arrayOf("nopbr")
+	override val validFlags = arrayOf("pbr, nobox")
 	override val validProperties = arrayOf("name")
 
 	override fun evalHelper(tokens: MutableList<Token>, currEnv: ParseEnv): String {
 		var sb = StringBuilder("\\$texId ")
 		sb.append(if ("name" in properties) Literal(listOf(properties["name"]!!)).eval(mutableListOf(), currEnv) else "\\\\")
-		sb.append("\\begin{mdframed}\\textbf{Solution}\\\\")
+		if ("nobox" !in flags) {
+			sb.append("\\begin{mdframed}\\textbf{Solution}\\\\")
+		}
 		evalChildren(sb, tokens, currEnv)
-		sb.append("\\end{mdframed}")
-		if ("nopbr" !in validFlags) {
+		if ("nobox" !in flags) {
+			sb.append("\\end{mdframed}")
+		}
+		if ("pbr" in flags) {
 			sb.append("\\clearpage")
 		}
 		return sb.toString()

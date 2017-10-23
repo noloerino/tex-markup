@@ -1,4 +1,4 @@
-package com.jhshi.markup
+package texmarkup
 import java.util.Arrays
 
 enum class ParseEnv {
@@ -103,7 +103,7 @@ abstract class Tag(val id: String, var flags: Array<String>, var properties: Has
             assert(tokens[0] is ClosingTag && (tokens[0] as Tag).id == id)
             tokens.removeAt(0)
         }
-        return evalHelper(toEval, currEnv)
+        return evalHelper(toEval, currEnv) + "\n"
     }
 
     open val validFlags: Array<String> = arrayOf()

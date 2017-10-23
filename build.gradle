@@ -31,3 +31,12 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8"
 }
 
+
+// https://stackoverflow.com/questions/26469365/building-a-self-executable-jar-with-gradle-and-kotlin
+jar {
+    manifest {
+        attributes 'Main-Class': 'MainKt'
+    }
+
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+}

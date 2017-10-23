@@ -1,4 +1,4 @@
-package com.jhshi.markup
+package texmarkup
 
 import java.io.File
 import java.io.BufferedReader

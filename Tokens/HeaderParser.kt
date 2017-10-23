@@ -1,4 +1,4 @@
-package com.jhshi.markup
+package texmarkup
 
 import com.beust.klaxon.*
 import java.io.File
@@ -57,8 +57,8 @@ fun buildHeader(): String {
 	val sb = StringBuilder()
 	sb.append(fields["header"]!!)
 	sb.append("\\rfoot{${fields["name"]!!} | ${fields["sid"]!!}}\n")
-	sb.append("\\lhead{\\Large\\fontfamily{lmdh}\\selectfont ${fields["class"]!!}\\tab\\tab ${fields["instr"]!!}}\n")
-	sb.append("\\rhead{\\LARGE \\fontfamily{lmdh}\\selectfont ${fields["hwnum"]!!}}\n")
+	sb.append("\\lhead{\\Large\\fontfamily{lmdh}\\selectfont ${fields["class"]!!} \\\\${fields["sem"]} \\tab\\tab ${fields["instr"]!!}}\n")
+	sb.append("\\rhead{\\LARGE \\fontfamily{lmdh}\\selectfont Homework ${fields["hwnum"]!!}}\n")
 	return sb.toString()
 }
 

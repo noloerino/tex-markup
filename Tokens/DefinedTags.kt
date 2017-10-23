@@ -1,8 +1,9 @@
-package com.jhshi.markup
+package texmarkup
 
 val definedTags = hashMapOf("matrix" to MatrixT.Companion::create,
 							"prob" to Problem.Companion::create)
 
+var problems = 1
 class Problem(flags: Array<String>, properties: HashMap<String, String>) : Tag("prob", flags, properties) {
 	override val validFlags = arrayOf("nobox")
 	override val validProperties = arrayOf("name")
@@ -11,12 +12,18 @@ class Problem(flags: Array<String>, properties: HashMap<String, String>) : Tag("
 		val pnum: Int
 		if (flags.size != 0) {
 			val flagNum: Int? = flags.filter { it.matches(Regex("(0|[1-9][0-9]*)")) }.map { it.toInt() }.max()
-			pnum = if (flagNum == null) Problem.problems else flagNum
+			if (flagNum == null) {
+				pnum = problems
+			}
+			else {
+				pnum = flagNum
+				problems = flagNum	
+			}
 		}
 		else {
-			pnum = Problem.problems
+			pnum = problems
 		}
-		Problem.problems++
+		problems++
 		val name = if ("name" in properties) properties["name"] else ""
 		val sb = StringBuilder("\\subsection*{$pnum. $name}")
 		val multipart = tokens.any { e -> e is ProbPart }
@@ -38,7 +45,6 @@ class Problem(flags: Array<String>, properties: HashMap<String, String>) : Tag("
 	}
 
 	companion object {
-		var problems = 1
 		fun create(flags: Array<String>, properties: HashMap<String, String>): Tag {
 			return Problem(flags, properties)
 		}
