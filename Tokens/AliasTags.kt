@@ -67,7 +67,10 @@ class ProbPart(flags: Array<String>, properties: HashMap<String, String>) : Alia
 		var sb = StringBuilder("\\$texId ")
 		sb.append(if ("name" in properties) Literal(listOf(properties["name"]!!)).eval(mutableListOf(), currEnv) else "\\\\")
 		if ("nobox" !in flags) {
-			sb.append("\\begin{mdframed}\\textbf{Solution}\\\\")
+			sb.append("\\begin{mdframed}\\textbf{Solution}")
+			if (tokens.size > 0 && !nxtEatsPrNewLine(tokens[1])) {
+				sb.append("\\\\")
+			}
 		}
 		evalChildren(sb, tokens, currEnv)
 		if ("nobox" !in flags) {

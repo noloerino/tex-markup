@@ -23,7 +23,7 @@ val fields = mutableMapOf(
 	"instr" to "MISSING",
 	"header" to "MISSING")
 fun initConfig(fileName: String) {
-	val obj = Parser().parse(fileName)/*parse(fileName)*/ as? JsonObject ?: throw NullPointerException("Cannot find file $fileName")
+	val obj = Parser().parse(fileName) as? JsonObject ?: throw NullPointerException("Cannot find file $fileName")
 
 	val meta = obj.obj("meta") as JsonObject
 	for (field in meta.keys) {
