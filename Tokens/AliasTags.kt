@@ -68,7 +68,7 @@ class ProbPart(flags: Array<String>, properties: HashMap<String, String>) : Alia
 		sb.append(if ("name" in properties) Literal(listOf(properties["name"]!!)).eval(mutableListOf(), currEnv) else "\\\\")
 		if ("nobox" !in flags) {
 			sb.append("\\begin{mdframed}\\textbf{Solution}")
-			if (tokens.size > 0 && !nxtEatsPrNewLine(tokens[1])) {
+			if (!nxtEatsPrNewLine(tokens)) {
 				sb.append("\\\\")
 			}
 		}

@@ -36,7 +36,7 @@ class Literal(var content: List<String>) : Token() {
         for (token in content) {
             for (c in token) {
                 if (c in csubstitutions.keys) {
-                    if (c == '\n' && (tokens.size != 0 || nxtEatsPrNewLine(tokens[1]))) { }
+                    if (tokens.size == 0 ||  (c == '\n' && nxtEatsPrNewLine(tokens))) { }
                     else {
                         sb.append(csubstitutions[c] + " ")
                     }
@@ -67,8 +67,14 @@ fun wrapInMath(inlin: Boolean, tokens: MutableList<Token>, currEnv: ParseEnv): S
 }
 
 val noPrecedingNewLineTags = listOf("center", "align", "enumerate", "mdframed")
-fun nxtEatsPrNewLine(t: Token): Boolean {
-    return t is Tag && t.id in noPrecedingNewLineTags
+fun nxtEatsPrNewLine(tokens: MutableList<Token>): Boolean {
+    try {
+        var t: Tag = tokens.first{ it is Tag } as Tag
+        return t.id in noPrecedingNewLineTags
+    }
+    catch (e: NoSuchElementException) {
+        return false
+    }
 }
 
 abstract class Tag(val id: String, var flags: Array<String>, var properties: HashMap<String, String>) : Token() {

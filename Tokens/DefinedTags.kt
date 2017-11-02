@@ -30,7 +30,7 @@ class Problem(flags: Array<String>, properties: HashMap<String, String>) : Tag("
 		if (!multipart) {
 			if ("nobox" !in flags) {
 				sb.append("\\begin{mdframed}\\textbf{Solution}")
-				if (tokens.size > 0 && !nxtEatsPrNewLine(tokens[1])) {
+				if (!nxtEatsPrNewLine(tokens)) {
 					sb.append("\\\\")
 				}
 			}
