@@ -29,10 +29,7 @@ class Problem(flags: Array<String>, properties: HashMap<String, String>) : Tag("
 		val multipart = tokens.any { e -> e is ProbPart }
 		if (!multipart) {
 			if ("nobox" !in flags) {
-				sb.append("\\begin{mdframed}\\textbf{Solution}")
-				if (!nxtEatsPrNewLine(tokens)) {
-					sb.append("\\\\")
-				}
+				sb.append("\\begin{mdframed}\\textbf{Solution: }")
 			}
 			evalChildren(sb, tokens, currEnv)
 			if ("nobox" !in flags) {

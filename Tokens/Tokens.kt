@@ -66,15 +66,21 @@ fun wrapInMath(inlin: Boolean, tokens: MutableList<Token>, currEnv: ParseEnv): S
     }
 }
 
-val noPrecedingNewLineTags = listOf("center", "align", "enumerate", "mdframed")
+val noPrecedingNewLineTags = listOf("center", "math", "enumerate", "itemize", "mdframed", "image", "item")
 fun nxtEatsPrNewLine(tokens: MutableList<Token>): Boolean {
-    try {
+    if (tokens.size > 1) {
+        return tokens[1] is Tag && (tokens[1] as Tag).id in noPrecedingNewLineTags
+    }
+    else {
+        return false;
+    }
+    /*try {
         var t: Tag = tokens.first{ it is Tag } as Tag
         return t.id in noPrecedingNewLineTags
     }
     catch (e: NoSuchElementException) {
         return false
-    }
+    }*/
 }
 
 abstract class Tag(val id: String, var flags: Array<String>, var properties: HashMap<String, String>) : Token() {
