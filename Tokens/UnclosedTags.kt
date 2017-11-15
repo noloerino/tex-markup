@@ -60,7 +60,7 @@ class IncludePDF(flags: Array<String>, properties: HashMap<String, String>) : Un
 			sb.append(properties["pgs"])
 		}
 		if ("src" in properties.keys) {
-			sb.append("]{${properties["pgs"]}}")
+			sb.append("]{${properties["src"]}}")
 		}
 		else {
 			sb.append("{}")
