@@ -1,19 +1,19 @@
 <!DOCTYPE texml>
 <texml>
-	<head> </head>
-	<body>
-		<prob name="Problem 1">
-			<part name="part a">
-			</part>
-		</prob>
+    <head> </head>
+    <body>
+        <prob name="Problem 1">
+            <part name="part a">
+            </part>
+        </prob>
 
-		<prob nobox name="My Own Problem">
-			Problem description
-			<box>
-				My solution
-			</box>
-		</prob>
-		<prob name="Homework Process">
-		</prob>
-	</body>
+        <prob nobox name="My Own Problem">
+            Problem description
+            <box>
+                My solution
+            </box>
+        </prob>
+        <prob name="Homework Process">
+        </prob>
+    </body>
 </texml>

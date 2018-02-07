@@ -39,7 +39,7 @@ private fun parseLineJoins(words: List<String>): List<String> {
 
 fun getWords(file: File): List<String> {
     val br = file.bufferedReader()
-    var text = parseLineJoins(br.readLines())
+    var text = br.readLines() //parseLineJoins(br.readLines())
     val TAG_OPEN = '<'
     val TAG_CLOSE = '>'
     var tokens: MutableList<String> = mutableListOf()
@@ -119,79 +119,79 @@ val TOKEN_PROPERTY = Regex("(?<= )\\w*=[^\"]\\S*(?=[ >])")
 val TOKEN_CLOSE = Regex("(?<=</)\\w*(?=\\s?.*?>)")
 
 fun wordsToTokens(file: File): MutableList<Token> {
-	val tokens: MutableList<Token> = mutableListOf()
-	val words = getWords(file)
-	// create tokens from words
-	// keeps track of what token requires closing, with most recent on the end
-	val openTokenStack: MutableList<String> = mutableListOf()
-	val emptyCreator = {-> UnknownTag.create("empty", arrayOf(), hashMapOf())}
-	var creator = emptyCreator
-	var i = 0
-	while (i < words.size) {
-		var word = words[i]
-		if (TOKEN_OPEN.containsMatchIn(word)) {
-			val tokenName: String = TOKEN_OPEN.find(word)!!.value
-			val flags: Array<String> = TOKEN_FLAG.findAll(word).map { it.value }.toList().toTypedArray()
-			val properties: HashMap<String, String> = getProperties(word)
-			creator = when (tokenName) {
-				in headerTags -> {-> HeaderTag.create(tokenName)}
-				in emptyTags -> {-> EmptyTag.create(tokenName, flags, properties)}
-				in lineTags -> {-> LineTag.create(tokenName, flags, properties)}
-				in unclosedTags -> {-> unclosedTags[tokenName]!!(flags, properties)}
-				in aliasTags -> {-> aliasTags[tokenName]!!(flags, properties)}
-				in definedTags -> {-> definedTags[tokenName]!!(flags, properties)}
-				else -> {-> UnknownTag.create(tokenName, flags, properties)}
-			}
-			if (tokenName !in unclosedTags) {
-				openTokenStack.add(tokenName)
-			}
-			tokens.add(creator())
-		}
-		else if (TOKEN_CLOSE.containsMatchIn(word)) {
-			val tokenName = TOKEN_CLOSE.find(word)!!.value
-			/*if (tokenName != openTokenStack.last()) { // token closed improperly
-				throw IllegalArgumentException("Attempted to close ${openTokenStack.last()} with $tokenName on word #$i")
-			}*/
-			openTokenStack.removeAt(openTokenStack.size - 1)
-			tokens.add(ClosingTag(tokenName))
-			creator = emptyCreator
-		}
-		else {
-			var literal: MutableList<String> = mutableListOf()
-			while (i < words.size && !TOKEN_OPEN.containsMatchIn(words[i]) && !TOKEN_CLOSE.containsMatchIn(words[i])) {
-				literal.add(words[i])
-				i++
-			}
-			i--
-			tokens.add(Literal(literal))
-		}
-		i++
-	}
-	if (openTokenStack.size != 0) {
-		//throw IllegalArgumentException("Unclosed token(s) ${openTokenStack.toString()}")
-	}
-	return tokens
+    val tokens: MutableList<Token> = mutableListOf()
+    val words = getWords(file)
+    // create tokens from words
+    // keeps track of what token requires closing, with most recent on the end
+    val openTokenStack: MutableList<String> = mutableListOf()
+    val emptyCreator = {-> UnknownTag.create("empty", arrayOf(), hashMapOf())}
+    var creator = emptyCreator
+    var i = 0
+    while (i < words.size) {
+        var word = words[i]
+        if (TOKEN_OPEN.containsMatchIn(word)) {
+            val tokenName: String = TOKEN_OPEN.find(word)!!.value
+            val flags: Array<String> = TOKEN_FLAG.findAll(word).map { it.value }.toList().toTypedArray()
+            val properties: HashMap<String, String> = getProperties(word)
+            creator = when (tokenName) {
+                in headerTags -> {-> HeaderTag.create(tokenName)}
+                in emptyTags -> {-> EmptyTag.create(tokenName, flags, properties)}
+                in lineTags -> {-> LineTag.create(tokenName, flags, properties)}
+                in unclosedTags -> {-> unclosedTags[tokenName]!!(flags, properties)}
+                in aliasTags -> {-> aliasTags[tokenName]!!(flags, properties)}
+                in definedTags -> {-> definedTags[tokenName]!!(flags, properties)}
+                else -> {-> UnknownTag.create(tokenName, flags, properties)}
+            }
+            if (tokenName !in unclosedTags) {
+                openTokenStack.add(tokenName)
+            }
+            tokens.add(creator())
+        }
+        else if (TOKEN_CLOSE.containsMatchIn(word)) {
+            val tokenName = TOKEN_CLOSE.find(word)!!.value
+            /*if (tokenName != openTokenStack.last()) { // token closed improperly
+                throw IllegalArgumentException("Attempted to close ${openTokenStack.last()} with $tokenName on word #$i")
+            }*/
+            openTokenStack.removeAt(openTokenStack.size - 1)
+            tokens.add(ClosingTag(tokenName))
+            creator = emptyCreator
+        }
+        else {
+            var literal: MutableList<String> = mutableListOf()
+            while (i < words.size && !TOKEN_OPEN.containsMatchIn(words[i]) && !TOKEN_CLOSE.containsMatchIn(words[i])) {
+                literal.add(words[i])
+                i++
+            }
+            i--
+            tokens.add(Literal(literal))
+        }
+        i++
+    }
+    if (openTokenStack.size != 0) {
+        //throw IllegalArgumentException("Unclosed token(s) ${openTokenStack.toString()}")
+    }
+    return tokens
 }
 
 fun getProperties(word: String): HashMap<String, String> {
-	val props = TOKEN_PROPERTY.findAll(word)
-	val propsStr = TOKEN_PROPERTY_STR.findAll(word)
-	val map: MutableMap<String, String> = mutableMapOf()
-	fun add(item: MatchResult) {
-		val split = item.value.split("=", limit=2)
-		if (split[1].length >= 2
-				&& (split[1].startsWith('\'') || split[1].startsWith('\"')) && (split[1].endsWith('\'') || split[1].endsWith('\"'))) {
-			map.put(split[0], split[1].substring(1, split[1].length - 1))
-		}
-		else {
-			map.put(split[0], split[1])
-		} //" this is to fix syntax highlighting
-	}
-	for (item in props) {
-		add(item)
-	}
-	for (item in propsStr) {
-		add(item)
-	}
-	return HashMap(map.toMap())
+    val props = TOKEN_PROPERTY.findAll(word)
+    val propsStr = TOKEN_PROPERTY_STR.findAll(word)
+    val map: MutableMap<String, String> = mutableMapOf()
+    fun add(item: MatchResult) {
+        val split = item.value.split("=", limit=2)
+        if (split[1].length >= 2
+                && (split[1].startsWith('\'') || split[1].startsWith('\"')) && (split[1].endsWith('\'') || split[1].endsWith('\"'))) {
+            map.put(split[0], split[1].substring(1, split[1].length - 1))
+        }
+        else {
+            map.put(split[0], split[1])
+        } //" this is to fix syntax highlighting
+    }
+    for (item in props) {
+        add(item)
+    }
+    for (item in propsStr) {
+        add(item)
+    }
+    return HashMap(map.toMap())
 }
